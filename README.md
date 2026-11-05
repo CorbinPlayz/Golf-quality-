@@ -43,3 +43,27 @@ Current ratings use exponential decay with a seven-day half-life and exclude rep
 SQLite foreign keys are enabled, with WAL journaling. Runtime database and uploaded files are ignored by Git. Persist **both `data/` and `uploads/`** across deployments, and back them up. Run one application instance against the local database; use a managed relational database and object storage before horizontal scaling. Uploaded images are limited to four 5 MB JPEG/PNG/WebP files with signature checks. Uploaded photos are public by design.
 
 Security hardening for a public launch should include: TLS, verified-email/reset-password delivery, a production distributed rate limiter, monitoring/backups, photo scanning/re-encoding, a moderation dashboard for collected flags, and a privacy/retention policy. The current sliding-window limiter is in-process. No email or push notifications are sent: followed-course updates are an in-app feed. The catalog does not yet provide worldwide course import or continuous official-information synchronization. No Google API key is required or configured.
+
+## Publish a public website from GitHub
+
+This repository includes a **Render Blueprint** (`render.yaml`) for the entire app, not a static-only GitHub Pages deployment.
+
+1. Merge the deployment pull request into `main`.
+2. Open https://render.com/deploy?repo=https://github.com/CorbinPlayz/Golf-quality-
+3. Sign in to Render and authorize access to this GitHub repository. Select `main` if prompted.
+4. Review the proposed **Starter web service and 1 GB persistent disk** and their current price. Hosting is paid; no service is purchased by adding this configuration.
+5. Approve deployment. When its health check passes, open the HTTPS address displayed in the Render dashboard. The actual hostname is assigned by Render; do not assume a particular `onrender.com` address before deployment completes.
+
+The blueprint installs build tools, runs checks, builds the frontend, and starts Express on Render's `PORT`. SQLite and uploaded photos reside under `/var/data/fairway` on the attached persistent disk. Keep a single instance. Use the provider's backups/snapshots and test restoration before collecting important user data. Subsequent GitHub deployments should preserve the disk. Deleting the disk destroys stored accounts/reports/photos.
+
+**Environment variables:** `PORT` (default 3000), `DATA_DIR` (default `./data`), `UPLOADS_DIR` (default `./uploads`), `NODE_ENV` (`production` for hosting). `/api/health` checks database availability. SIGTERM/SIGINT stop accepting connections and close the database.
+
+### Verify after deployment
+
+- Open `/api/health` on your new domain: expect `{"status":"ok"}`.
+- Open the homepage and a deep link such as `/rankings`.
+- Create a new account, sign out/in, submit a report and photo, and save a course.
+- Switch to **Live reports only** and confirm that demonstration reports disappear.
+- Redeploy once, then verify the account/report/photo still exist.
+
+The deploy link opens provider setup; it is **not** an already-live Fairway website. GitHub merging alone does not provision hosting.
