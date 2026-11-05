@@ -1,0 +1,12 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import {computeCourseMetrics,calculateReportWeight,getRatingBand} from '../shared/ratings';
+const now=Date.now();
+const report=(rating:number,days:number)=>({overallRating:rating,createdAt:new Date(now-days*864e5).toISOString(),greensRating:rating,fairwaysRating:null,bunkersRating:null,roughRating:null,teeBoxesRating:null,greenSpeed:null,firmness:null,aerationStatus:null,paceMinutes:null});
+test('No reports cannot produce a current rating',()=>{assert.equal(computeCourseMetrics([], '30d',now).currentWeightedRating,null)});
+test('Stale excellent reports cannot imply excellent current conditions',()=>{const m=computeCourseMetrics([report(10,40)],'all',now);assert.equal(m.currentWeightedRating,null);assert.equal(m.confidence,'stale');assert.equal(m.historicalAverageRating,10)});
+test('Seven-day half-life',()=>{assert.equal(calculateReportWeight(report(8,7).createdAt,now),.5)});
+test('Fresh report dominates previous conditions',()=>{const m=computeCourseMetrics([report(5,0),report(10,14)],'30d',now);assert.equal(m.currentWeightedRating,6);assert.equal(m.trend,'declining')});
+test('One report must carry limited confidence',()=>{assert.equal(computeCourseMetrics([report(9,1)],'30d',now).confidence,'limited')});
+test('Window filters exclude out-of-window reports',()=>{assert.equal(computeCourseMetrics([report(7,0),report(9,8)],'7d',now).windowReportCount,1)});
+test('Rating scale matches the displayed bands',()=>{assert.equal(getRatingBand(8.5).band,'good');assert.equal(getRatingBand(9).band,'excellent');assert.equal(getRatingBand(4).band,'below_average')});
