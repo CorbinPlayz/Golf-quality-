@@ -1,0 +1,24 @@
+# Render Blueprint: one Node server with a persistent SQLite/photos disk.
+# A paid instance and disk are required; review Render's pricing before approval.
+services:
+  - type: web
+    name: fairway
+    runtime: node
+    plan: starter
+    numInstances: 1
+    buildCommand: npm ci --include=dev && npm run typecheck && npm test && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: 22.22.3
+      - key: NODE_ENV
+        value: production
+      - key: DATA_DIR
+        value: /var/data/fairway/data
+      - key: UPLOADS_DIR
+        value: /var/data/fairway/uploads
+    disk:
+      name: fairway-storage
+      mountPath: /var/data/fairway
+      sizeGB: 1

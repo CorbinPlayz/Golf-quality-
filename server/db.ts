@@ -1,15 +1,10 @@
 import { DatabaseSync } from 'node:sqlite';
 import path from 'node:path';
-import fs from 'node:fs';
+import { dataDirectory } from './storage';
 import { VERIFIED_COURSES } from './verifiedCourses';
 import { hashPassword } from './auth';
 
-const DATA_DIR = path.resolve(process.cwd(), 'data');
-if (!fs.existsSync(DATA_DIR)) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
-}
-
-const DB_PATH = path.join(DATA_DIR, 'fairway.db');
+const DB_PATH = path.join(dataDirectory, 'fairway.db');
 export const db = new DatabaseSync(DB_PATH);
 
 db.exec('PRAGMA journal_mode = WAL;');
